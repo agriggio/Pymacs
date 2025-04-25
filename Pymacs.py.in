@@ -46,6 +46,9 @@ else:
     __metaclass__ = type
     import os, sys
 
+_stdout = sys.__stdout__
+_stdin = sys.__stdin__
+
 def fixup_icanon():
     # otherwise sys.stdin.read hangs for large inputs in emacs 24
     # see comment in emacs source code sysdep.c
@@ -119,9 +122,10 @@ Arguments are added to the search path for Python modules.
         self.inhibit_quit = True
 
         if not PYTHON3:
+            global _stdin, _stdout
             # Re-open standard input and output in binary mode.
-            sys.stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-            sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+            _stdin = os.fdopen(_stdin.fileno(), 'rb')
+            _stdout = os.fdopen(_stdout.fileno(), 'wb')
 
         # Start protocol and services.
         lisp._protocol.send('version', '"%s"' % version)
@@ -307,15 +311,15 @@ class Protocol:
 
         def receive(self):
             # Receive a Python expression from Emacs, return (ACTION, TEXT).
-            prefix = sys.stdin.buffer.read(3)
+            prefix = _stdin.buffer.read(3)
             if not prefix or prefix[0] != ord(b'>'):
                 raise ProtocolError("`>' expected.")
             while prefix[-1] != ord(b'\t'):
-                character = sys.stdin.buffer.read(1)
+                character = _stdin.buffer.read(1)
                 if not character:
                     raise ProtocolError("Empty stdin read.")
                 prefix += character
-            data = sys.stdin.buffer.read(int(prefix[1:-1]))
+            data = _stdin.buffer.read(int(prefix[1:-1]))
             try:
                 text = data.decode('UTF-8')
             except UnicodeDecodeError:
@@ -331,21 +335,21 @@ class Protocol:
 
         def receive(self):
             # Receive a Python expression from Emacs, return (ACTION, TEXT).
-            prefix = sys.stdin.read(3)
+            prefix = _stdin.read(3)
             if not prefix or prefix[0] != '>':
                 if OLD_EXCEPTIONS:
                     raise ProtocolError, "`>' expected."
                 else:
                     raise ProtocolError("`>' expected.")
             while prefix[-1] != '\t':
-                character = sys.stdin.read(1)
+                character = _stdin.read(1)
                 if not character:
                     if OLD_EXCEPTIONS:
                         raise ProtocolError, "Empty stdin read."
                     else:
                         raise ProtocolError("Empty stdin read.")
                 prefix += character
-            text = sys.stdin.read(int(prefix[1:-1]))
+            text = _stdin.read(int(prefix[1:-1]))
             if run.debug_file is not None:
                 handle = open(run.debug_file, 'a')
                 handle.write(prefix + text)
@@ -369,9 +373,9 @@ class Protocol:
                 handle = open(run.debug_file, 'a')
                 handle.write(prefix + text)
                 handle.close()
-            sys.stdout.buffer.write(prefix.encode('ASCII'))
-            sys.stdout.buffer.write(data)
-            sys.stdout.buffer.flush()
+            _stdout.buffer.write(prefix.encode('ASCII'))
+            _stdout.buffer.write(data)
+            _stdout.buffer.flush()
 
     else:
 
@@ -389,8 +393,8 @@ class Protocol:
                 handle = open(run.debug_file, 'a')
                 handle.write(prefix + text)
                 handle.close()
-            sys.stdout.write(prefix + text)
-            sys.stdout.flush()
+            _stdout.write(prefix + text)
+            _stdout.flush()
 
 def pymacs_load_helper(file_without_extension, prefix):
     # This function imports a Python module, then returns a Lisp expression
