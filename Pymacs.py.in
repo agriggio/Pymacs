@@ -37,11 +37,8 @@ version = '@VERSION@'
 if PYTHON3:
     import collections, os, sys
 
-    def callable(value):
-        return isinstance(value, collections.Callable)
-
     basestring = str
-    from imp import reload
+    from importlib import reload
 else:
     __metaclass__ = type
     import os, sys
@@ -226,8 +223,8 @@ class Protocol:
                     import traceback
                     action = 'raise'
                     if lisp.debug_on_error.value() is None:
-                        value = traceback.format_exception_only(sys.exc_type,
-                            sys.exc_value)
+                        tp, val, _ = sys.exc_info()
+                        value = traceback.format_exception_only(tp, val)
                         value = ''.join(value).rstrip()
                     else:
                         value = traceback.format_exc()
