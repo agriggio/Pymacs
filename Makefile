@@ -3,7 +3,7 @@
 # François Pinard <pinard@iro.umontreal.ca>, 2001.
 
 EMACS = emacs
-PYTHON = python
+PYTHON = python3
 RST2LATEX = rst2latex
 
 PYSETUP = $(PYTHON) setup.py

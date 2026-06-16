@@ -31,7 +31,7 @@ DEFADVICE_OK = 't'
 
 def get_python():
     import os
-    return os.getenv('PYTHON') or 'python'
+    return os.getenv('PYTHON') or 'python3'
 
 PYTHON = get_python()
 del get_python
